@@ -55,8 +55,8 @@ The output is a generated string that pairs existing items in a user's wardrobe 
 
 **What happens if it fails or returns nothing:**
 <!-- What should the agent do if the outfit data is incomplete? -->
-- Empty wardrobe: "Please add an item to your wardrobe to generate an outfit suggestion"
-- Wrong input type for new_item: "Please utilize search_listings to find a new valid item"
+- Empty wardrobe: calls the LLM with a general styling prompt instead. Returns advice on what kinds of pieces pair well with the new item, the vibe it suits, and 1–2 outfit ideas built from common wardrobe staples. Does not raise an exception or return an empty string.
+- Wrong input type for new_item: fields are read with `.get()` so missing keys produce a degraded-but-valid prompt. Returns "Please utilize search_listings to find a new valid item" if new_item is not a dict.
 
 
 ---
@@ -186,7 +186,7 @@ For each tool, describe the specific failure mode you're handling and what the a
 
 For Milestone 3, I plan to use Claude to help implement and test each tool one at a time. I will give ChatGPT the specific tool spec from this `planning.md`, including the tool’s purpose, input parameters, expected return value, and failure modes. I will also provide the relevant project files, such as `data_loader.py`, `listings.json`, and any wardrobe schema files, so the implementation matches the existing data structure.
 
-For `search_listings()`, I will ask Claude to implement the function using `load_listings()` from `data_loader.py`. I expect it to produce a function that filters listings by description, category, style tags, size, max price, colors, and brand, then returns the top 3 relevant results. I will verify it by testing at least 3 queries: one that should return matches, one that should return no matches, and one with multiple filters such as size and max price.
+For `search_listings()`, I will ask Claude to implement the function using `load_listings()` from `data_loader.py`. I expect it to produce a function that filters listings by description, size, and max price, then returns the top 3 relevant results. I will verify it by testing at least 3 queries: one that should return matches, one that should return no matches, and one with multiple filters such as size and max price.
 
 For `suggest_outfit()`, I will give Claude the tool spec, an example `new_item` from `search_listings()`, and a sample wardrobe. I expect it to produce a function that validates the wardrobe and new item, then generates a styling suggestion using the new item and compatible wardrobe pieces. I will verify it by testing with a valid wardrobe, an empty wardrobe, and an invalid `new_item` input.
 

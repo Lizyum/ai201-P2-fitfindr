@@ -18,6 +18,8 @@ Usage (once implemented):
     print(result["error"])   # None on success
 """
 
+import re
+
 from tools import search_listings, suggest_outfit, create_fit_card
 
 
@@ -92,9 +94,50 @@ def run_agent(query: str, wardrobe: dict) -> dict:
     Before writing code, complete the Planning Loop and State Management sections
     of planning.md — your implementation should match what you described there.
     """
-    # TODO: implement the planning loop
+    # Step 1: initialize session
     session = _new_session(query, wardrobe)
-    session["error"] = "Planning loop not yet implemented."
+
+    # Step 2: parse query with regex — extract size ("size M") and price ("under $30")
+    size_match = re.search(r'\bsize\s+([A-Za-z0-9/]+)', query, re.IGNORECASE)
+    price_match = re.search(
+        r'(?:under|max|below|at most)\s*\$?\s*(\d+(?:\.\d+)?)', query, re.IGNORECASE
+    )
+    size = size_match.group(1) if size_match else None
+    max_price = float(price_match.group(1)) if price_match else None
+    session["parsed"] = {"description": query, "size": size, "max_price": max_price}
+
+    # Step 3: search listings — returns error string if nothing matched
+    results = search_listings(description=query, size=size, max_price=max_price)
+    if isinstance(results, str):
+        session["error"] = results
+        return session
+    session["search_results"] = results
+
+    # Step 4: select top result
+    session["selected_item"] = results[0]
+
+    # Step 5: guard empty wardrobe, then generate outfit suggestion
+    if not wardrobe.get("items"):
+        session["error"] = "Add an item to wardrobe for suggestion"
+        return session
+
+    suggestion = suggest_outfit(session["selected_item"], wardrobe)
+
+    if not suggestion or not suggestion.strip():
+        session["error"] = "Cannot generate an outfit suggestion at this time"
+        return session
+    session["outfit_suggestion"] = suggestion
+
+    # Step 6: generate fit card caption
+    caption = create_fit_card(session["outfit_suggestion"], session["selected_item"])
+
+    if not caption or not caption.strip():
+        session["error"] = "Cannot generate an outfit caption at this time"
+        return session
+    
+    session["fit_card"] = caption
+
+    # Step 7: return completed session
     return session
 
 

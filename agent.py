@@ -105,37 +105,40 @@ def run_agent(query: str, wardrobe: dict) -> dict:
     size = size_match.group(1) if size_match else None
     max_price = float(price_match.group(1)) if price_match else None
     session["parsed"] = {"description": query, "size": size, "max_price": max_price}
+    print(f"[parsed] description={query!r}  size={size}  max_price={max_price}")
 
-    # Step 3: search listings — returns error string if nothing matched
+    # Step 3: search listings — returns empty list if nothing matched
     results = search_listings(description=query, size=size, max_price=max_price)
-    if isinstance(results, str):
-        session["error"] = results
-        return session
     session["search_results"] = results
+    print(f"[search_listings] {len(results)} result(s): {[r['title'] for r in results]}")
+    if not results:
+        session["error"] = "No items match your criteria, please adjust your criteria"
+        return session
 
     # Step 4: select top result
     session["selected_item"] = results[0]
+    print(f"[selected_item] {results[0]['title']} — ${results[0]['price']} ({results[0]['platform']})")
 
-    # Step 5: guard empty wardrobe, then generate outfit suggestion
-    if not wardrobe.get("items"):
-        session["error"] = "Add an item to wardrobe for suggestion"
-        return session
-
+    # Step 5: generate outfit suggestion (suggest_outfit handles empty wardrobe internally)
+    print(f"[suggest_outfit] calling LLM with {len(wardrobe.get('items', []))} wardrobe item(s)...")
     suggestion = suggest_outfit(session["selected_item"], wardrobe)
 
     if not suggestion or not suggestion.strip():
         session["error"] = "Cannot generate an outfit suggestion at this time"
         return session
     session["outfit_suggestion"] = suggestion
+    print(f"[suggest_outfit] {suggestion[:120]}...")
 
     # Step 6: generate fit card caption
+    print("[create_fit_card] calling LLM...")
     caption = create_fit_card(session["outfit_suggestion"], session["selected_item"])
 
     if not caption or not caption.strip():
         session["error"] = "Cannot generate an outfit caption at this time"
         return session
-    
+
     session["fit_card"] = caption
+    print(f"[create_fit_card] {caption[:120]}...")
 
     # Step 7: return completed session
     return session

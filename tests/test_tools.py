@@ -14,10 +14,10 @@ class TestSearchListings:
         assert isinstance(results, list)
         assert len(results) > 0
 
-    def test_returns_error_string_for_no_matches(self):
-        """No listing is a 'designer ballgown' under $5 in XXS — must return the no-match error string."""
+    def test_returns_empty_list_for_no_matches(self):
+        """No listing is a 'designer ballgown' under $5 in XXS — must return [] not raise."""
         results = search_listings("designer ballgown", size="XXS", max_price=5.0)
-        assert results == "No items match your criteria, please adjust your criteria"
+        assert results == []
 
     def test_multiple_filters_size_and_price(self):
         """
@@ -126,9 +126,9 @@ class TestCreateFitCard:
     def test_empty_outfit_returns_error_string(self):
         """Empty outfit string should return the error string without calling the LLM."""
         result = create_fit_card("", SAMPLE_ITEM)
-        assert result == "Cannot generate an outfit caption at this time"
+        assert result == "Please provide an outfit suggestion to create a fit card."
 
     def test_whitespace_outfit_returns_error_string(self):
         """Whitespace-only outfit string should also return the error string."""
         result = create_fit_card("   ", SAMPLE_ITEM)
-        assert result == "Cannot generate an outfit caption at this time"
+        assert result == "Please provide an outfit suggestion to create a fit card."

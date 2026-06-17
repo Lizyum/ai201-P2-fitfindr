@@ -40,7 +40,7 @@ def search_listings(
     description: str,
     size: str | None = None,
     max_price: float | None = None,
-) -> list[dict] | str:
+) -> list[dict]:
     """
     Search the mock listings dataset for items matching the description,
     optional size, and optional price ceiling.
@@ -54,7 +54,7 @@ def search_listings(
 
     Returns:
         A list of matching listing dicts, sorted by relevance (best match first).
-        Returns a descriptive error string if nothing matches — does NOT raise an exception.
+        Returns an empty list if nothing matches — does NOT raise an exception.
 
     Each listing dict has the following fields:
         id, title, description, category, style_tags (list), size,
@@ -87,9 +87,6 @@ def search_listings(
 
     scored = [(score(l), l) for l in listings]
     scored = [(s, l) for s, l in scored if s > 0]
-
-    if not scored:
-        return "No items match your criteria, please adjust your criteria"
 
     scored.sort(key=lambda x: x[0], reverse=True)
     return [l for _, l in scored[:3]]
@@ -199,7 +196,7 @@ def create_fit_card(outfit: str, new_item: dict) -> str:
 
     """
     if not outfit or not outfit.strip():
-        return "Cannot generate an outfit caption at this time"
+        return "Please provide an outfit suggestion to create a fit card."
 
     title = new_item.get("title", "thrifted find")
     price = new_item.get("price", "?")
